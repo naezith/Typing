@@ -1,5 +1,5 @@
-bin/
-obj/
+bin
+obj
 Typing.layout
 Typing.depend
 Typing\.cscope_file_list
