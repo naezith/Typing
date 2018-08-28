@@ -1,0 +1,6 @@
+bin/
+obj/
+Typing.layout
+Typing.depend
+Typing\.cscope_file_list
+.DS_Store
