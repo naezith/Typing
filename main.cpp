@@ -112,10 +112,10 @@ class Typing {
                 _input.clear();
 
                 if(_active_word_idx < _words.size() - 1) {
-                    ++_active_word_idx;
-                }
-                else {
+                    _stat_letters += activeWord().get().size();
+                    ++_stat_words;
 
+                    ++_active_word_idx;
                 }
 
                 return true;
@@ -146,7 +146,22 @@ class Typing {
             RichText text(font);
             text.setCharacterSize(size);
 
-            text << sf::Text::Bold << sf::Color::White << _input;
+            text << sf::Text::Regular << sf::Color::White << _input;
+
+            return text;
+        }
+
+        RichText getStats(const sf::Font& font, unsigned size) {
+            RichText text(font);
+            text.setCharacterSize(size);
+
+            text << sf::Text::Regular << sf::Color::White << "Words: " <<
+                    sf::Text::Regular << sf::Color::Cyan << std::to_string(_stat_words);
+
+            text << sf::Text::Regular << sf::Color::White << '\n';
+
+            text << sf::Text::Regular << sf::Color::White << "Letters: " <<
+                    sf::Text::Regular << sf::Color::Cyan << std::to_string(_stat_letters);
 
             return text;
         }
@@ -157,28 +172,37 @@ class Typing {
 
             int word_count = 0;
 
-            for(int i = 0; i < _active_word_idx; ++i) {
-                text << sf::Text::Regular << sf::Color::Green << _words[i].getDisplayText() + ' ';
-                if(++word_count >= line_length) { text << '\n'; word_count = 0; }
+            int start_line = _active_word_idx/_line_length;
+            int start_idx = start_line * _line_length;
+
+            int end_idx = std::min<int>(start_idx + _line_count*_line_length, _words.size());
+
+            for(int i = start_idx; i < _active_word_idx; ++i) {
+                text << sf::Text::Regular << sf::Color::Green << _words[i].getDisplayText() << sf::Text::Regular  << ' ';
+                if(++word_count >= _line_length) { text << '\n'; word_count = 0; }
             }
 
-            text << sf::Text::Regular << (wrongInput() ? sf::Color::Yellow : sf::Color::Red) << activeWord().getDisplayText() + ' ';
-            if(++word_count >= line_length) { text << '\n'; word_count = 0; }
+            text << sf::Text::Underlined << (wrongInput() ? sf::Color::Yellow : sf::Color::Red) << activeWord().getDisplayText() << sf::Text::Regular  << ' ';
+            if(++word_count >= _line_length) { text << '\n'; word_count = 0; }
 
 
-            for(int i = _active_word_idx + 1; i < _words.size(); ++i) {
-                text << sf::Text::Regular << sf::Color::White << _words[i].getDisplayText() + ' ';
-                if(++word_count >= line_length) { text << '\n'; word_count = 0; }
+            for(int i = _active_word_idx + 1; i < end_idx; ++i) {
+                text << sf::Text::Regular << sf::Color::White << _words[i].getDisplayText() << sf::Text::Regular  << ' ';
+                if(++word_count >= _line_length) { text << '\n'; word_count = 0; }
             }
 
             return text;
         }
 
     private:
-        int line_length = 10;
+        int _line_length = 5;
+        int _line_count = 2;
 
         std::vector<Word> _words;
         int _active_word_idx = 0;
+
+        int _stat_letters = 0;
+        int _stat_words = 0;
 
         Word& activeWord() {
             return _words[_active_word_idx];
@@ -199,13 +223,15 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(800, 600), "Typing", sf::Style::Default);
 
     // Load font
-    int size = FONT_SMALL;
+    int size = FONT_BIG;
     sf::Font font;
     if(!font.loadFromFile("data/assets/fonts/Ubuntu-C.ttf")) return EXIT_FAILURE;
+    sf::Texture& texture = const_cast<sf::Texture&>(font.getTexture(size));
+    texture.setSmooth(false);
 
     Dictionary dc;
     Typing typ;
-    typ.setWords(dc.getRandomWords(30));
+    typ.setWords(dc.getRandomWords(999));
 
     while(window.isOpen()) {
         sf::Event event;
@@ -227,24 +253,24 @@ int main() {
 
                 case sf::Event::TextEntered:
                     // ENTER
-                    if(event.text.unicode == ' ') {
+                    switch(event.text.unicode) {
+                        case ' ':
+                        case '\r':
+                        case '\b':
+                            break;
 
-                    }
-                    else if(event.text.unicode == '\r') {
+                        default:
+                            if(event.text.unicode >= 32 && event.text.unicode < 127) {
+                                typ.type(event.text.unicode);
+                            }
 
+                            break;
                     }
-                    else if(event.text.unicode == '\b') {
-
-                    }
-                    else if(event.text.unicode >= 32 && event.text.unicode < 127) {
-                        typ.type(event.text.unicode);
-                    }
-
-                    break;
             }
         }
 
         window.clear();
+
         {
             RichText text = typ.getDisplay(font, size);
             text.setPosition(50, 20);
@@ -253,7 +279,13 @@ int main() {
 
         {
             RichText text = typ.getInput(font, size);
-            text.setPosition(50, 100);
+            text.setPosition(50, 400);
+            window.draw(text);
+        }
+
+        {
+            RichText text = typ.getStats(font, size);
+            text.setPosition(600, 400);
             window.draw(text);
         }
 
