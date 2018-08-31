@@ -1,4 +1,6 @@
-bin
+bin/Release/*
+!bin/Release/data
+
 obj
 Typing.layout
 Typing.depend
