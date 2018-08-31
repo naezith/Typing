@@ -226,8 +226,6 @@ int main() {
     int size = FONT_BIG;
     sf::Font font;
     if(!font.loadFromFile("data/assets/fonts/Ubuntu-C.ttf")) return EXIT_FAILURE;
-    sf::Texture& texture = const_cast<sf::Texture&>(font.getTexture(size));
-    texture.setSmooth(false);
 
     Dictionary dc;
     Typing typ;
