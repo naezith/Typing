@@ -4,3 +4,5 @@
 There is extra functionality in classes, I did not remove those just in case you might wanna have words separately like a word hunting game.
 
 There is no timer, just typing.
+
+Example data provided in bin/Release/data
